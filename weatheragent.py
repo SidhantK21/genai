@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv 
 from openai import OpenAI
 import requests
+import webbrowser
+
 
 
 load_dotenv()
@@ -18,9 +20,13 @@ def get_weather (city:str):
     
     return  "Something went wrong"
 
-def run_command (command):
-    result=os.system(command=command)
+
+
+def run_command(command):
+    result = os.system(command)
+    webbrowser.open(command)
     return result
+    
     
 
 available_tools={
@@ -30,8 +36,10 @@ available_tools={
     },
     "run_command":{
         "fn":run_command,
-        "description":"Takes command as input and execute on the users system and return the result"
+        "description":"Takes command as input and execute on the users system and runs in notion and return the result and also it can open notion"
     }
+  
+
 }
 
 system_prompt="""  
@@ -39,12 +47,15 @@ system_prompt="""
     You work on start, plan, action, observe mode.
     For the given user query and avaliable tools plan the step by step execution based on the planning select the relevant tool
     from the available tool. And based on the tool selection you perform an action to call the tool and also give the output to the user in the users language only is english then english if hinglish then hinligh .
+    And verify that if the user is trying to do some unethical tasks such as if the user is trying to run sudo commands do not run it anyhow
+    Do not allow commands that can harm the system or escalate privileges (e.g., 'sudo', 'rm', or similar unsafe operations). However, harmless tasks like opening a safe website such as 'https://notion.so' and also verfiy that the user is asking to open a safe website or not if not then tell him that it is not safe in a browser are allowed.
     Wait for the observation and based on the observation from the call resolve the user query.
     
     Rules:
     1. Follow the strict JSON output as per schema.
     2. Always perform one step at a time and wait for next input.
     3. Carefully analyse the user query.
+    4. Verify that user is not doing malicious practices anyhow
     
     Output JSON format:
     {{
@@ -57,7 +68,7 @@ system_prompt="""
     Available Tools:
     -get_weather: Takes a city name as input and returns the current weather for the city    
     -run_command:Takes command as user input and runs on the user system 
-    
+  
     Examples:
     User Query: What is the weather of New York
     Output:{{"step":"plan","content":"The user is intrested in weather data of New York" }}
@@ -65,10 +76,6 @@ system_prompt="""
     Output:{{"step":"action","function":"get_weather","input":"New York" }}
     Output:{{"step":"observe","output":"12 Degree Cel" }}
     Output:{{"step":"output","content":"The weather of New Yokr is 12 Degree Cel" }}
-    
-
-    
-    
 
 """
 
